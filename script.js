@@ -1,4 +1,5 @@
-import Book from "./Book.js";
+import Book from "./model/Book.js";
+import Library from "./model/Library.js";
 
 const ADD_BOOK_FORM = document.getElementById("add-book-form");
 const bookSection = document.querySelector(".books");
@@ -6,7 +7,12 @@ const newBookButton = document.getElementById("new-book-btn");
 const modal = document.getElementById("modal");
 const closeModalButton = document.getElementById("close-modal");
 
-const myLibrary = [];
+const onLibraryChanged = () => {
+  renderBooks();
+  updateCounters();
+};
+
+const myLibrary = new Library(onLibraryChanged);
 let readCounter = 0;
 let incompleteCounter = 0;
 
@@ -23,9 +29,7 @@ function addBookToLibrary(event) {
   const newBook = new Book(bookTitle, bookAuthor, bookPages);
   newBook.read = isRead;
 
-  myLibrary.push(newBook);
-
-  renderBooks();
+  myLibrary.addBook(newBook);
 
   ADD_BOOK_FORM.reset();
 
@@ -55,7 +59,7 @@ function renderBook(title, author, pages, read) {
   READ_CHECKBOX.type = "checkbox";
   READ_CHECKBOX.checked = read;
   READ_CHECKBOX.addEventListener("change", () => {
-    myLibrary.forEach((book) => {
+    myLibrary.getAllBooks().forEach((book) => {
       if (
         book.title === title &&
         book.author === author &&
@@ -68,7 +72,7 @@ function renderBook(title, author, pages, read) {
   });
 
   REMOVE_BUTTON.addEventListener("click", () => {
-    removeBook(title, author, pages);
+    myLibrary.removeBook(title, author, pages);
   });
 
   READ_LABEL.append(READ_CHECKBOX);
@@ -87,7 +91,7 @@ function renderBook(title, author, pages, read) {
 function renderBooks() {
   bookSection.innerHTML = "";
 
-  myLibrary.forEach((book) => {
+  myLibrary.getAllBooks().forEach((book) => {
     renderBook(book.title, book.author, book.pages, book.read);
   });
   updateCounters();
@@ -107,22 +111,9 @@ window.addEventListener("click", (event) => {
   }
 });
 
-function removeBook(title, author, pages) {
-  const bookIndex = myLibrary.findIndex(
-    (book) =>
-      book.title === title && book.author === author && book.pages === pages
-  );
-
-  if (bookIndex !== -1) {
-    myLibrary.splice(bookIndex, 1);
-    renderBooks();
-    updateCounters();
-  }
-}
-
 function updateCounters() {
-  readCounter = myLibrary.filter((book) => book.read).length;
-  incompleteCounter = myLibrary.length - readCounter;
+  readCounter = myLibrary.getReadBookCount();
+  incompleteCounter = myLibrary.getUnreadBookCount();
 
   document.getElementById(
     "read-counter"
